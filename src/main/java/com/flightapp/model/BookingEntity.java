@@ -38,6 +38,8 @@ public class BookingEntity {
     @JoinColumn(name = "flight_id")
 	private FlightEntity flight;
 	private LocalDateTime bookingTime;
+	@ManyToOne
+	private FlightEntity returnFlight;
 	private int noOfSeats;
 	private boolean status;
 	public int getBookingId() {
@@ -117,5 +119,13 @@ public class BookingEntity {
 
 	 public void setBookingTime(LocalDateTime bookingTime) {
 		 this.bookingTime = bookingTime;
+	 }
+
+	 public FlightEntity getReturnFlight() {
+		 return returnFlight;
+	 }
+
+	 public void setReturnFlight(FlightEntity returnFlight) {
+		 this.returnFlight = returnFlight;
 	 }
 }

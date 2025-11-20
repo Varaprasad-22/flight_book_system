@@ -24,32 +24,36 @@ import com.flightapp.repository.FlightRepository;
 public class FlightServiceImpl implements FlightService {
 
 	@Autowired
-	private FlightRepository flightRepo;
+	private FlightRepository flightRepository;
 	@Autowired
-	private AirlineRepository airlinerepo;
+	private AirlineRepository airlineRepository;
 
 	@Override
-	public String addFlight(Flight flight) {
+	public int addFlight(Flight flightRequest) {
 		// TODO Auto-generated method stub
 		try {
-			FlightEntity fli = new FlightEntity();
-			Optional<Airline> airlines = airlinerepo.findByAirlineName(flight.getAirlineName());
+			FlightEntity flightEntity = new FlightEntity();
+			Optional<Airline> airlines = airlineRepository.findByAirlineName(flightRequest.getAirlineName());
 			if (!airlines.isPresent()) {
 				throw new ResourceNotFoundException(
-						"Flight save failed: Airline '" + flight.getAirlineName() + "' not found.");
+						"Flight save failed: Airline '" + flightRequest.getAirlineName() + "' not found.");
+			}
+			Optional<FlightEntity> flightOpt = flightRepository.findByFlightNumber(flightRequest.getFlightNumber());
+			if (flightOpt.isPresent()) {
+			    throw new ResourceNotFoundException("Flight with number " + flightRequest.getFlightNumber() + " does NOT exist.");
 			}
 			Airline airline = airlines.get();
-			fli.setAirlineId(airline.getAirlineId());
-			fli.setFlightNumber(flight.getFlightNumber());
-			fli.setFromLocation(flight.getFromPlace());
-			fli.setToLocation(flight.getToPlace());
-			fli.setPrice(flight.getPrice());
-			fli.setArrivalTime(flight.getArrivalTime());
-			fli.setDepatureTime(flight.getDepatureTime());
-			fli.setTotalSeats(flight.getTotalSeats());
-			fli.setAvaliSeats(flight.getTotalSeats());
-			flightRepo.save(fli);
-			return "Flight Saved";
+			flightEntity.setAirlineId(airline.getAirlineId());
+			flightEntity.setFlightNumber(flightRequest.getFlightNumber());
+			flightEntity.setFromLocation(flightRequest.getFromPlace());
+			flightEntity.setToLocation(flightRequest.getToPlace());
+			flightEntity.setPrice(flightRequest.getPrice());
+			flightEntity.setArrivalTime(flightRequest.getArrivalTime());
+			flightEntity.setDepatureTime(flightRequest.getDepatureTime());
+			flightEntity.setTotalSeats(flightRequest.getTotalSeats());
+			flightEntity.setAvaliSeats(flightRequest.getTotalSeats());
+			FlightEntity savedFlight=flightRepository.save(flightEntity);
+			return savedFlight.getFlightId();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Flight Saved failed: " + e.getMessage());
@@ -58,50 +62,56 @@ public class FlightServiceImpl implements FlightService {
 	}
 
 	@Override
-	public SearchResult search(Search data) {
+	public SearchResult search(Search searchRequest) {
 		// TODO Auto-generated method stub
 		SearchResult result = new SearchResult();
 
-		LocalDateTime startOfDay = data.getDepartureDate().atStartOfDay();
-		LocalDateTime endOfDay = data.getDepartureDate().atTime(LocalTime.MAX);
+		LocalDateTime startOfDay = searchRequest.getDepartureDate().atStartOfDay();
+		LocalDateTime endOfDay = searchRequest.getDepartureDate().atTime(LocalTime.MAX);
 
-		List<FlightEntity> outboundEntities = flightRepo.findByFromLocationAndToLocationAndDepatureTimeBetween(
-				data.getFromPlace(), data.getToPlace(), startOfDay, endOfDay);
+		List<FlightEntity> outboundEntities = flightRepository.findByFromLocationAndToLocationAndDepatureTimeBetween(
+				searchRequest.getFromPlace(), searchRequest.getToPlace(), startOfDay, endOfDay);
 		result.setOutboundFlights(mapEntitiesToDTOs(outboundEntities));
+		 if (outboundEntities.isEmpty()) {
+		        throw new ResourceNotFoundException("No flights found");
+		}
 
-		if ("round-trip".equalsIgnoreCase(data.getTripType()) && data.getReturnDate() != null) {
+		if ("round-trip".equalsIgnoreCase(searchRequest.getTripType()) && searchRequest.getReturnDate() != null) {
 
-			LocalDateTime returnStart = data.getReturnDate().atStartOfDay();
-			LocalDateTime returnEnd = data.getReturnDate().atTime(LocalTime.MAX);
+			LocalDateTime returnStart = searchRequest.getReturnDate().atStartOfDay();
+			LocalDateTime returnEnd = searchRequest.getReturnDate().atTime(LocalTime.MAX);
 
-			List<FlightEntity> inboundEntities = flightRepo.findByFromLocationAndToLocationAndDepatureTimeBetween(
-					data.getToPlace(), data.getFromPlace(), returnStart, returnEnd);
+			List<FlightEntity> inboundEntities = flightRepository.findByFromLocationAndToLocationAndDepatureTimeBetween(
+					searchRequest.getToPlace(), searchRequest.getFromPlace(), returnStart, returnEnd);
+			if (inboundEntities.isEmpty()) {
+	            throw new ResourceNotFoundException("No return flights found");
+	        }
 			result.setInboundFlights(mapEntitiesToDTOs(inboundEntities));
 		}
 
 		return result;
 	}
 
-	private List<Flight> mapEntitiesToDTOs(List<FlightEntity> entities) {
-		return entities.stream().map(entity -> {
-			Flight dto = new Flight();
-			Optional<Airline> airlines = airlinerepo.findByAirlineId(entity.getAirlineId());
+	private List<Flight> mapEntitiesToDTOs(List<FlightEntity> flightEntities) {
+		return flightEntities.stream().map(entity -> {
+			Flight flightRequestDto = new Flight();
+			Optional<Airline> airlines = airlineRepository.findByAirlineId(entity.getAirlineId());
 			if (!airlines.isPresent()) {
 				throw new ResourceNotFoundException("Airline not found for ID: " + entity.getAirlineId());
 			}
 			Airline airline = airlines.get();
-			dto.setAirlineName(airline.getAirlineName());
-			dto.setFlightNumber(entity.getFlightNumber());
-			dto.setFromPlace(entity.getFromLocation());
-			dto.setToPlace(entity.getToLocation());
-			dto.setPrice(entity.getPrice());
-			dto.setTotalSeats(entity.getTotalSeats());
-			dto.setDepatureTime(entity.getDepatureTime());
-			dto.setArrivalTime(entity.getArrivalTime());
+			flightRequestDto.setAirlineName(airline.getAirlineName());
+			flightRequestDto.setFlightNumber(entity.getFlightNumber());
+			flightRequestDto.setFromPlace(entity.getFromLocation());
+			flightRequestDto.setToPlace(entity.getToLocation());
+			flightRequestDto.setPrice(entity.getPrice());
+			flightRequestDto.setTotalSeats(entity.getTotalSeats());
+			flightRequestDto.setDepatureTime(entity.getDepatureTime());
+			flightRequestDto.setArrivalTime(entity.getArrivalTime());
 
 			// TODO: Add your logic to find airlineName from entity.getAirlineId()
 
-			return dto;
+			return flightRequestDto;
 		}).collect(Collectors.toList());
 	}
 

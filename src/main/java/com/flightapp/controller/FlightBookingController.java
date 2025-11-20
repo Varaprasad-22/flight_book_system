@@ -3,6 +3,8 @@ package com.flightapp.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +36,9 @@ public class FlightBookingController {
 	private BookingService bookingService;
 
 	@PostMapping("/airline/inventory/add")
-	public String addFlights(@RequestBody @Valid Flight flightEntry) {
-		return flightService.addFlight(flightEntry);
+	public ResponseEntity<Integer> addFlights(@RequestBody @Valid Flight flightEntry) {
+		int flightId=flightService.addFlight(flightEntry);
+		return ResponseEntity.status(HttpStatus.CREATED).body(flightId);
 	}
 
 	@PostMapping("/search")
@@ -43,10 +46,10 @@ public class FlightBookingController {
 		return flightService.search(data);
 	}
 
-	@PostMapping("/booking/{flightId}")
-	public String flightBooking(@PathVariable String flightId, @Valid @RequestBody Bookingdto data) {
+	@PostMapping("/booking")
+	public String flightBooking(@Valid @RequestBody Bookingdto data) {
 
-		return bookingService.bookFlight(data, flightId);
+		return bookingService.bookFlight(data);
 	}
 
 	@GetMapping("/ticket/{pnr}")

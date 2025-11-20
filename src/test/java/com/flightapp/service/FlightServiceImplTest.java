@@ -4,7 +4,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.flightapp.dto.Flight;
+import com.flightapp.dto.Search;
+import com.flightapp.dto.SearchResult;
+import com.flightapp.exceptions.ResourceNotFoundException;
 import com.flightapp.model.Airline;
 import com.flightapp.model.FlightEntity;
 import com.flightapp.repository.AirlineRepository;
@@ -69,10 +74,45 @@ public class FlightServiceImplTest {
 		when(airlinerepo.findByAirlineName("Air India")).thenReturn(Optional.of(airline));
 		when(flightrepo.save(any())).thenReturn(entity);
 
-		String msg = flightservice.addFlight(flightDto);
+		int flightId = flightservice.addFlight(flightDto);
 
-		assertEquals("Flight Saved", msg);
+		assertEquals(10, flightId);
 		verify(flightrepo, times(1)).save(any());
 	}
+	@Test
+	void testSearchFlights_noFlightsFound() {
+
+	    Search searchDto = new Search();
+	    searchDto.setFromPlace("HYD");
+	    searchDto.setToPlace("DEL");
+	    searchDto.setTripType("one-way");
+	    searchDto.setDepartureDate(LocalDate.now());
+	    when(flightrepo.findByFromLocationAndToLocationAndDepatureTimeBetween(
+	            anyString(), anyString(), any(), any()))
+	            .thenReturn(List.of());
+
+	    assertThrows(ResourceNotFoundException.class,
+	            () -> flightservice.search(searchDto));
+	}
+	@Test
+	void testSearchFlights_success() {
+
+	    Search searchDto = new Search();
+	    searchDto.setFromPlace("HYD");
+	    searchDto.setToPlace("DEL");
+	    searchDto.setTripType("oneWay");
+	    searchDto.setDepartureDate(LocalDate.now());
+	    when(flightrepo.findByFromLocationAndToLocationAndDepatureTimeBetween(
+	            anyString(), anyString(), any(), any()))
+	            .thenReturn(List.of(entity));
+	    when(airlinerepo.findByAirlineId(1))
+	            .thenReturn(Optional.of(airline));
+
+	    SearchResult result = flightservice.search(searchDto);
+
+	    assertNotNull(result);
+	    assertEquals(1, result.getOutboundFlights().size());
+	}
+
 
 }

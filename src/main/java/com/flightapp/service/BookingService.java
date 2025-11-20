@@ -6,7 +6,7 @@ import com.flightapp.dto.BookingGetResponse;
 import com.flightapp.dto.Bookingdto;
 
 public interface BookingService {
-	String bookFlight(Bookingdto data, String id);
+	String bookFlight(Bookingdto data);
 
 	BookingGetResponse getBookingDetails(String pnr);
 

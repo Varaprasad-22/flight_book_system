@@ -7,6 +7,6 @@ import com.flightapp.dto.Search;
 import com.flightapp.dto.SearchResult;
 
 public interface FlightService {
-	String addFlight(Flight flight);
+	int addFlight(Flight flight);
 	SearchResult search(Search data);
 }

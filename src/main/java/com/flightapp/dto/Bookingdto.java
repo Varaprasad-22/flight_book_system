@@ -25,6 +25,9 @@ public class Bookingdto {
 	@Valid
 	@NotEmpty(message = "Passenger list cannot be empty")
 	private List<Passengers> passengers;
+	private Integer outboundFlightId;
+	private Integer returnFlightId;
+
 
 	public String getEmailId() {
 		return emailId;
@@ -56,6 +59,22 @@ public class Bookingdto {
 
 	public void setPassengers(List<Passengers> passengers) {
 		this.passengers = passengers;
+	}
+
+	public Integer getOutboundFlightId() {
+		return outboundFlightId;
+	}
+
+	public void setOutboundFlightId(Integer outboundFlightId) {
+		this.outboundFlightId = outboundFlightId;
+	}
+
+	public Integer getReturnFlightId() {
+		return returnFlightId;
+	}
+
+	public void setReturnFlightId(Integer returnFlightId) {
+		this.returnFlightId = returnFlightId;
 	}
 
 }

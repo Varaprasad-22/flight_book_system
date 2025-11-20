@@ -1,5 +1,6 @@
 package com.flightapp.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightapp.dto.*;
 import com.flightapp.service.BookingService;
@@ -8,6 +9,7 @@ import com.flightapp.service.FlightService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -83,13 +85,13 @@ public class FlightBookingControllerTest {
 	    }
 	    @Test
 	    void testAddFlights_success() throws Exception {
-	        when(flightService.addFlight(any())).thenReturn("Flight Saved");
+	        when(flightService.addFlight(any())).thenReturn(10);
 
 	        mockMvc.perform(post("/api/v1.0/flight/airline/inventory/add")
 	                .contentType("application/json")
 	                .content(objectMapper.writeValueAsString(flightDto)))
-	                .andExpect(status().isOk())
-	                .andExpect(content().string("Flight Saved"));
+	                .andExpect(status().isCreated())
+	                .andExpect(content().string(String.valueOf(10)));
 	    }
 	    @Test
 	    void testSearchFlights_success() throws Exception {
@@ -106,14 +108,15 @@ public class FlightBookingControllerTest {
 	    }
 	    @Test
 	    void testFlightBooking_success() throws Exception {
-	        when(bookingService.bookFlight(any(), eq("101")))
-	                .thenReturn("Booking Successful!");
+	    	when(bookingService.bookFlight(any()))
+	        .thenReturn("One-way Booking Successful! PNR: ABC123");
 
-	        mockMvc.perform(post("/api/v1.0/flight/booking/101")
+
+	        mockMvc.perform(post("/api/v1.0/flight/booking")
 	                .contentType("application/json")
 	                .content(objectMapper.writeValueAsString(bookingDto)))
 	                .andExpect(status().isOk())
-	                .andExpect(content().string("Booking Successful!"));
+	                .andExpect(content().string("One-way Booking Successful! PNR: ABC123"));
 	    }
 	    @Test
 	    void testBookingDetails_success() throws Exception {
@@ -142,4 +145,5 @@ public class FlightBookingControllerTest {
 	                .andExpect(status().isOk())
 	                .andExpect(content().string("Ticket Cancelled"));
 	    }
+		
 }
